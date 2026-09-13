@@ -1,0 +1,29 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "skill": "allow",
+    "read": "allow",
+    "glob": "allow",
+    "grep": "allow",
+    "list": "allow",
+    "bash": {
+      "*": "ask",
+      "python vocab.py search *": "allow",
+      "python vocab.py list": "allow",
+      "python vocab.py list *": "allow",
+      "python vocab.py topics": "allow",
+      "python vocab.py topic *": "allow",
+      "python vocab.py add *": "allow",
+      "python vocab.py new-set": "allow",
+      "python vocab.py new-set *": "allow",
+      "python \"vocab.py\" search *": "allow",
+      "python \"vocab.py\" list": "allow",
+      "python \"vocab.py\" list *": "allow",
+      "python \"vocab.py\" topics": "allow",
+      "python \"vocab.py\" topic *": "allow",
+      "python \"vocab.py\" add *": "allow",
+      "python \"vocab.py\" new-set": "allow",
+      "python \"vocab.py\" new-set *": "allow"
+    }
+  }
+}

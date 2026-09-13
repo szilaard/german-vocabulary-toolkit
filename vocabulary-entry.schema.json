@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "vocabulary-entry.schema.json",
+  "title": "German vocabulary entry or entry list",
+  "oneOf": [
+    { "$ref": "#/$defs/entry" },
+    {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/entry" }
+    }
+  ],
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "word", "meaning", "topics"],
+      "properties": {
+        "type": { "enum": ["noun", "verb", "adjective", "other"] },
+        "word": { "type": "string", "minLength": 1 },
+        "set_id": { "type": "integer", "minimum": 1 },
+        "meaning": { "type": "string", "minLength": 1 },
+        "topics": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "plural": { "type": "string", "minLength": 1 },
+        "genitive": { "type": "string", "minLength": 1 },
+        "forms": { "type": "string", "minLength": 1 },
+        "pattern": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string", "minLength": 1 },
+        "note": { "type": "string", "minLength": 1 },
+        "example_de": { "type": "string", "minLength": 1 },
+        "example_en": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "noun" } } },
+          "then": { "required": ["plural", "genitive"] }
+        },
+        {
+          "if": { "properties": { "type": { "enum": ["verb", "adjective"] } } },
+          "then": { "required": ["forms"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "other" } } },
+          "then": { "required": ["kind"] }
+        }
+      ]
+    }
+  }
+}

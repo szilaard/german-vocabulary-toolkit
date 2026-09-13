@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+
+# Local environment secrets.
+.env
+
+# Each user keeps their own vocabulary; the tracked example bootstraps it.
+vocabulary.yaml
+
+# Local OpenCode dependencies.
+.opencode/node_modules/
+.opencode/package.json
+.opencode/package-lock.json
+.opencode/bun.lock
