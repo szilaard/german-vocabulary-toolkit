@@ -5,56 +5,61 @@ personal German vocabulary list.
 
 ## Getting Started
 
-Requires Python 3.8 or newer.
+Requires Python 3.8 or newer. Open the project in OpenCode and describe what
+you want to add, review, or practise. You do not need to format the vocabulary
+or run the commands yourself.
 
-```bash
-python vocab.py list
-```
+On the first vocabulary request, the toolkit creates a personal
+`vocabulary.yaml` from the included example. This file is ignored by Git, so
+your vocabulary stays local.
 
-On first use, `vocab.py` creates `vocabulary.yaml` from the tracked
-`vocabulary.example.yaml` template. The personal file is ignored by Git, so
-vocabulary can be added without publishing it.
+## Add Words
 
-## Commands
+Tell OpenCode what you want to add. You can use German or English and add one
+word or several at once.
 
-```bash
-python vocab.py search "WORD"
-python vocab.py list
-python vocab.py list noun
-python vocab.py topics
-python vocab.py topic "TOPIC"
-python vocab.py add --type verb --word lernen --meaning "to learn" --topic education --forms "lernt; lernte; hat gelernt"
-python vocab.py new-set --dry-run
-python vocab.py new-set
-```
+> Add lernen to my vocabulary.
 
-Use `--file PATH` before the command to work with another vocabulary file. A
-missing file is initialized from the example template.
+> Add appointment, reliable, and to avoid to my vocabulary.
 
-```bash
-python vocab.py --file another-vocabulary.yaml list
-```
+> Add der Termin, zuverlässig, and vermeiden.
 
-See `AGENTS.md` and `.opencode/skills/german-vocabulary/SKILL.md` for the
-OpenCode workflow and vocabulary conventions.
+The toolkit fills in useful details such as forms, meanings, topics, and
+examples.
 
-## Publishing
+## Topics
 
-The included `.gitignore` excludes personal vocabulary, Python caches, and
-locally installed OpenCode packages. Before the first commit, verify the files
-Git will include:
+Words can be organized into topics such as travel, work, or education. You can
+ask OpenCode to show your topics or retrieve the words from one of them.
 
-```bash
-git init
-git status --short
-git add .
-git status --short
-git commit -m "Initial commit"
-```
+## Learn In Sets
 
-Then create an empty GitHub repository and connect it using the commands GitHub
-shows, or use the GitHub CLI:
+Sets let you learn words in batches. They are not thematic: a set simply groups
+the unassigned words you have collected. New words wait for the next set until
+you ask to create it.
 
-```bash
-gh repo create german-vocabulary --source=. --public --push
-```
+> Create a new set.
+
+> What will be in the next set?
+
+> Give me set 5.
+
+## Practise And Quiz
+
+> Quiz me on set 5. Give me a list of English words to translate into German.
+> Do not use multiple choice.
+
+Answer with your translations and ask OpenCode to check them. You can customize
+the task by changing the direction, number of words, word type, or grammar
+focus. For example:
+
+> Give me German words to translate into English.
+
+> Give me verbs and ask for their simple past and perfect forms.
+
+> Give me nouns without their articles and let me add the correct articles.
+
+The underlying CLI remains available for scripting. Run `python vocab.py
+--help` for its commands. See `AGENTS.md` and
+`.opencode/skills/german-vocabulary/SKILL.md` for the OpenCode workflow and
+vocabulary conventions.
