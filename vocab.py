@@ -2,10 +2,14 @@
 """Search, append, and group entries in vocabulary.yaml without external packages."""
 
 import argparse
+from datetime import datetime
 import json
 import re
 import sys
+import webbrowser
 from pathlib import Path
+
+from practice_page import render_practice_page
 
 if sys.stdout.encoding:
     sys.stdout.reconfigure(encoding="utf-8")
@@ -34,6 +38,7 @@ REQUIRED = {
 
 DEFAULT_VOCABULARY = Path(__file__).with_name("vocabulary.yaml")
 VOCABULARY_TEMPLATE = Path(__file__).with_name("vocabulary.example.yaml")
+PRACTICE_DIRECTORY = Path(__file__).with_name("practice")
 
 
 def entries(text):
@@ -119,6 +124,25 @@ def list_entries(path, kind=None):
         for section, block in entries(path.read_text(encoding="utf-8"))
         if selected_section is None or section == selected_section
     ]
+    print_entries(matches)
+
+
+def query_entries(path, kind=None, set_id=None, topics=None, contains=None):
+    """Print entries matching every supplied filter."""
+    selected_section = SECTIONS[kind] if kind else None
+    topic_keys = {topic.casefold() for topic in topics or []}
+    matches = []
+    for section, block in entries(path.read_text(encoding="utf-8")):
+        if selected_section is not None and section != selected_section:
+            continue
+        if set_id is not None and entry_set_id(block) != set_id:
+            continue
+        entry_topic_keys = {topic.casefold() for topic in entry_topics(block)}
+        if not topic_keys.issubset(entry_topic_keys):
+            continue
+        if contains is not None and contains.casefold() not in block.casefold():
+            continue
+        matches.append((section, block))
     print_entries(matches)
 
 
@@ -257,6 +281,54 @@ def initialize_vocabulary(path):
     print(f"Initialized {path} from {VOCABULARY_TEMPLATE.name}.", file=sys.stderr)
 
 
+def read_json_argument(value):
+    """Read JSON from an inline value, a file path, or standard input."""
+    try:
+        if value == "-":
+            raw = sys.stdin.read()
+        elif value.lstrip().startswith(("{", "[")):
+            raw = value
+        else:
+            raw = Path(value).read_text(encoding="utf-8")
+        return json.loads(raw)
+    except (OSError, json.JSONDecodeError) as error:
+        raise SystemExit(f"Could not read JSON input: {error}") from error
+
+
+def practice_output_path(title):
+    slug = re.sub(r"[^a-z0-9]+", "-", title.casefold()).strip("-") or "practice"
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    output = PRACTICE_DIRECTORY / f"{timestamp}-{slug}.html"
+    suffix = 2
+    while output.exists():
+        output = PRACTICE_DIRECTORY / f"{timestamp}-{slug}-{suffix}.html"
+        suffix += 1
+    return output
+
+
+def create_practice_page(payload, title, output=None):
+    if not isinstance(payload, list) or not payload:
+        raise SystemExit("Practice input must be a non-empty JSON array")
+
+    questions = []
+    for index, item in enumerate(payload, 1):
+        if not isinstance(item, dict) or set(item) != {"question", "answer"}:
+            raise SystemExit(f"practice question {index} must contain only: question, answer")
+        if any(not isinstance(item[field], str) or not item[field].strip() for field in ("question", "answer")):
+            raise SystemExit(f"practice question {index} requires non-empty question and answer strings")
+        questions.append({"question": item["question"].strip(), "answer": item["answer"].strip()})
+
+    output = output or practice_output_path(title)
+    try:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(render_practice_page(title, questions), encoding="utf-8")
+    except OSError as error:
+        raise SystemExit(f"Could not write practice page: {error}") from error
+    label = "question" if len(questions) == 1 else "questions"
+    print(f"Created practice page with {len(questions)} {label}: {output}")
+    return output
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--file", type=Path, default=DEFAULT_VOCABULARY)
@@ -268,6 +340,12 @@ def main():
     list_parser = commands.add_parser("list", help="print the complete vocabulary or one word type")
     list_parser.add_argument("kind", nargs="?", choices=SECTIONS)
 
+    query_parser = commands.add_parser("query", help="print entries matching all supplied optional filters")
+    query_parser.add_argument("--set", dest="set_id", type=int, help="match a set ID")
+    query_parser.add_argument("--type", dest="kind", choices=SECTIONS, help="match a word type")
+    query_parser.add_argument("--topic", action="append", help="match a topic; repeat to require multiple topics")
+    query_parser.add_argument("--contains", help="match text anywhere in an entry")
+
     commands.add_parser("topics", help="list topics with entry counts")
 
     new_set_parser = commands.add_parser("new-set", help="assign the next set ID to all unassigned entries")
@@ -275,6 +353,18 @@ def main():
 
     topic_parser = commands.add_parser("topic", help="print all entries in a topic")
     topic_parser.add_argument("name")
+
+    practice_parser = commands.add_parser("practice", help="generate a practice page from question-answer pairs")
+    practice_parser.add_argument("input", nargs="?", help="inline JSON, a JSON file, or - for standard input")
+    practice_parser.add_argument(
+        "--item",
+        nargs=2,
+        action="append",
+        metavar=("QUESTION", "ANSWER"),
+        help="add a question-answer pair; may be repeated",
+    )
+    practice_parser.add_argument("--title", default="Vocabulary Practice")
+    practice_parser.add_argument("--output", type=Path)
 
     add_parser = commands.add_parser("add", help="append entries from arguments or JSON")
     add_parser.add_argument("input", nargs="?", help="inline JSON, a JSON file, or - for standard input")
@@ -294,6 +384,9 @@ def main():
     if args.command == "list":
         list_entries(args.file, args.kind)
         return
+    if args.command == "query":
+        query_entries(args.file, args.kind, args.set_id, args.topic, args.contains)
+        return
     if args.command == "topics":
         list_topics(args.file)
         return
@@ -302,6 +395,17 @@ def main():
         return
     if args.command == "topic":
         find_topic(args.file, args.name)
+        return
+    if args.command == "practice":
+        if (args.input is None) == (args.item is None):
+            raise SystemExit("Provide either JSON input or one or more --item pairs")
+        payload = (
+            read_json_argument(args.input)
+            if args.input is not None
+            else [{"question": question, "answer": answer} for question, answer in args.item]
+        )
+        output = create_practice_page(payload, args.title, args.output)
+        webbrowser.open(output.resolve().as_uri())
         return
 
     argument_fields = {
@@ -327,16 +431,7 @@ def main():
     if args.input is None:
         payload = supplied_fields
     else:
-        try:
-            if args.input == "-":
-                raw = sys.stdin.read()
-            elif args.input.lstrip().startswith(("{", "[")):
-                raw = args.input
-            else:
-                raw = Path(args.input).read_text(encoding="utf-8")
-            payload = json.loads(raw)
-        except (OSError, json.JSONDecodeError) as error:
-            raise SystemExit(f"Could not read JSON input: {error}") from error
+        payload = read_json_argument(args.input)
 
     items = payload if isinstance(payload, list) else [payload]
     if not items:

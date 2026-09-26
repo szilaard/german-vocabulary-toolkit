@@ -8,6 +8,8 @@ YAML file directly.
 - Search entries: `python vocab.py search "WORD"`
 - List every entry: `python vocab.py list`
 - List one type: `python vocab.py list noun|verb|adjective|other`
+- Query by one or more filters: `python vocab.py query --set 1 --type verb`
+- Filter by topic or entry text: `python vocab.py query --topic travel --contains train`
 - List topics and their entry counts: `python vocab.py topics`
 - List entries in a topic: `python vocab.py topic "TOPIC"`
 - Add an entry: `python vocab.py add --type TYPE --word WORD --meaning MEANING --topic TOPIC ...`
@@ -27,11 +29,13 @@ and are included in the next explicitly requested set.
 Use `python vocab.py new-set --dry-run` to preview the result without changing
 the vocabulary.
 
-## Skills
+## Queries
 
-Use the `german-vocabulary` skill for requests to add, import, correct,
-organize, enrich, or review German vocabulary. It contains the entry schema,
-required fields, vocabulary conventions, and safe command workflow.
+Use `query` whenever the request combines filters. Every filter is optional,
+so use only the filters requested. All supplied filters must match. `--topic`
+may be repeated and then requires every named topic. `--contains` is optional
+text matching and can be combined with any other filter.
 
-Use any other available specialized skill when its description matches the
-request. The currently relevant project skill is `german-vocabulary`.
+- `python vocab.py query --set 1`
+- `python vocab.py query --set 1 --type verb`
+- `python vocab.py query --type noun --topic travel`

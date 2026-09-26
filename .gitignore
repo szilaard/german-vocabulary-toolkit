@@ -6,6 +6,7 @@ __pycache__/
 
 # Each user keeps their own vocabulary; the tracked example bootstraps it.
 vocabulary.yaml
+practice/
 
 # Local OpenCode dependencies.
 .opencode/node_modules/

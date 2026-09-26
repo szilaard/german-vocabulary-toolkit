@@ -20,8 +20,14 @@ not claim that `vocab.py` validates against the JSON Schema.
 - Find text anywhere in an entry: `python vocab.py search "WORD"`
 - Get the complete vocabulary: `python vocab.py list`
 - Get one word type: `python vocab.py list noun|verb|adjective|other`
+- Combine filters: `python vocab.py query --set 1 --type verb`
+- Filter by topic or entry text: `python vocab.py query --topic travel --contains train`
 - List available topics and counts: `python vocab.py topics`
 - Get one topic: `python vocab.py topic "TOPIC"`
+
+Every `query` filter is optional. Use only the requested filters; all filters
+that are supplied must match. `--contains` is optional text matching and may
+be combined with `--set`, `--type`, and `--topic`.
 
 ## Sets
 
@@ -29,7 +35,9 @@ When the user asks to create a new set, run `python vocab.py new-set`. It finds
 the highest existing `set_id`, increments it, and assigns that ID to every entry
 without one. Use `python vocab.py new-set --dry-run` to preview the result.
 
-Use `list` or `topic` to load the requested material before quizzes or practice.
+Before quizzes or practice, retrieve only the requested material with `query`.
+For example, use `python vocab.py query --set 1 --type verb` for set 1 verbs.
+Use `list` only when the user asks for every entry or all entries of one type.
 
 ## Add
 
